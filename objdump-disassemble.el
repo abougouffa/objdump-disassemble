@@ -30,6 +30,13 @@
   :group 'objdump-disassemble
   :type '(choice file string))
 
+(defcustom objdump-disassemble-disable-on-remote nil
+  "Don't try to disassemble remote files.
+
+Normally, this requires objdump to be installed on the remote machine."
+  :group 'objdump-disassemble
+  :type 'boolean)
+
 ;; A predicate for detecting binary buffers. Inspired by: emacs.stackexchange.com/q/10277/37002
 ;;;###autoload
 (defun objdump-binary-buffer-p (&optional buffer)
@@ -55,10 +62,11 @@ This checks the first CHUNK of bytes, defaults to 1024."
 ;;;###autoload
 (defun objdump-recognizable-file-p (filename)
   "Can FILENAME be recognized by \"objdump\"."
-  (when-let* ((file (and filename (file-truename filename))))
-    (and objdump-executable
-         (executable-find objdump-executable)
-         (not (file-remote-p file))
+  (when-let* ((file (and filename (file-truename filename)))
+              (default-directory (file-name-directory filename)))
+    (and (executable-find objdump-executable)
+         (or (not objdump-disassemble-disable-on-remote)
+             (not (file-remote-p file)))
          (file-exists-p file)
          (not (file-directory-p file))
          (not (zerop (file-attribute-size (file-attributes file))))
