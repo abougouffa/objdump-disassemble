@@ -15,9 +15,11 @@
 
 (require 'asm-mode)
 
+(eval-when-compile
+  (require 'cl-macs))
 
 (defgroup objdump-disassemble nil
-  "Use \"objdump\" to display disassembled execulables and object files."
+  "Use \"objdump\" to display disassembled executable and object files."
   :group 'tools)
 
 (defcustom objdump-executable "objdump"
@@ -125,6 +127,14 @@ Return nil if the current buffer is not recognizable by objdump."
   (if objdump-disassemble-mode
       (objdump-disassemble-setup)
     (objdump-disassemble-teardown)))
+
+;;;###autoload
+(define-global-minor-mode global-objdump-disassemble-mode objdump-disassemble-mode objdump-disassemble-setup
+  :lighter "Objdump"
+  :group 'objdump-disassemble
+  (if global-objdump-disassemble-mode
+      (add-to-list 'magic-fallback-mode-alist '(objdump-binary-buffer-p . objdump-disassemble-mode) t)
+    (cl-callf2 delete '(objdump-binary-buffer-p . objdump-disassemble-mode) magic-fallback-mode-alist)))
 
 
 (provide 'objdump-disassemble)
