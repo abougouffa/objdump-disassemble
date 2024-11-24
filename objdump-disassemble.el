@@ -113,11 +113,25 @@ Return nil if the current buffer is not recognizable by objdump."
     (setq-local font-lock-defaults '(objdump-disassemble-font-lock-keywords))
     (font-lock-update)))
 
+(defvar-local objdump-symbol-table nil)
+(defun objdump--get-symbols ()
+  (or objdump-symbol-table
+      (progn
+        (setq objdump-symbol-table (obarray-make 300))
+        (save-excursion
+          (save-match-data
+            (goto-char (point-min))
+            (while (re-search-forward "^[0-9a-f]+ <\\([a-zA-Z_0-9:.]+\\)>:$"
+                                      nil t)
+              (intern (match-string 1) objdump-symbol-table))))
+        objdump-symbol-table)))
+
 (defun objdump-disassemble-teardown ()
   "Setup the current buffer for `objdump-disassemble-mode'."
-  (when objdump-disassemble--orig-filename
-    (set-visited-file-name objdump-disassemble--orig-filename))
-  (revert-buffer t t))
+  (when (and objdump-disassemble-mode objdump-disassemble--orig-filename)
+    (set-visited-file-name objdump-disassemble--orig-filename)
+    (setq objdump-disassemble--orig-filename nil)
+    (revert-buffer t t)))
 
 ;;;###autoload
 (define-minor-mode objdump-disassemble-mode
@@ -133,7 +147,7 @@ Return nil if the current buffer is not recognizable by objdump."
   :lighter "Objdump"
   :group 'objdump-disassemble
   (if global-objdump-disassemble-mode
-      (add-to-list 'magic-fallback-mode-alist '(objdump-binary-buffer-p . objdump-disassemble-mode) t)
+      (add-hook 'magic-fallback-mode-alist '(objdump-binary-buffer-p . objdump-disassemble-mode) 99)
     (cl-callf2 delete '(objdump-binary-buffer-p . objdump-disassemble-mode) magic-fallback-mode-alist)))
 
 
