@@ -28,6 +28,11 @@
   :group 'objdump-disassemble
   :type '(choice file string))
 
+(defcustom objdump-disassemble-magic-fallback-hook-depth 95
+  "The depth at which the hook is added in `magic-fallback-mode-alist'."
+  :group 'objdump-disassemble
+  :type 'natnum)
+
 (make-obsolete-variable 'objdump-executable 'objdump-disassemble-executable "1.0")
 
 (defcustom objdump-disassemble-disable-on-remote nil
@@ -115,7 +120,9 @@ Return nil if the current buffer is not recognizable by objdump."
   :lighter "Objdump"
   :group 'objdump-disassemble
   (if global-objdump-disassemble-mode
-      (add-hook 'magic-fallback-mode-alist '(objdump-recognizable-buffer-p . objdump-disassemble-mode) 99)
+      (add-hook 'magic-fallback-mode-alist
+                '(objdump-recognizable-buffer-p . objdump-disassemble-mode)
+                objdump-disassemble-magic-fallback-hook-depth)
     (cl-callf2 delete '(objdump-recognizable-buffer-p . objdump-disassemble-mode) magic-fallback-mode-alist)))
 
 
