@@ -40,17 +40,19 @@ Normally, this requires objdump to be installed on the remote machine."
 ;;;###autoload
 (defun objdump-recognizable-file-p (filename)
   "Can FILENAME be recognized by \"objdump\"."
-  (when-let* ((file (and filename (file-truename filename)))
-              (default-directory (file-name-directory filename)))
+  (when-let* ((filename (and filename (file-truename filename))))
     (and (executable-find objdump-disassemble-executable)
-         (or (not objdump-disassemble-disable-on-remote)
-             (not (file-remote-p file)))
-         (file-regular-p file)
-         (not (zerop (file-attribute-size (file-attributes file))))
+         (or (not (file-remote-p filename))
+             (and (file-remote-p filename)
+                  (not objdump-disassemble-disable-on-remote)))
+         (file-regular-p filename)
+         (not (zerop (file-attribute-size (file-attributes filename))))
          (not (string-match-p
                "file format not recognized"
-               (shell-command-to-string
-                (format "%s --file-headers %s" objdump-disassemble-executable (shell-quote-argument file))))))))
+               (let ((default-directory (file-name-directory filename)) ; To ensure running the command in the remote host if any
+                     (local-filename (file-name-nondirectory filename)))
+                 (shell-command-to-string
+                  (format "%s --file-headers %s" objdump-disassemble-executable (shell-quote-argument local-filename)))))))))
 
 ;;;###autoload
 (defun objdump-recognizable-buffer-p (&optional buffer)
@@ -65,15 +67,16 @@ Normally, this requires objdump to be installed on the remote machine."
   "Disassemble the current buffer.
 
 Return nil if the current buffer is not recognizable by objdump."
-  (let* ((file (buffer-file-name))
+  (let* ((filename (buffer-file-name))
          (buffer-read-only nil))
-    (when (objdump-recognizable-file-p file)
-      (message "Disassembling %S using objdump." (file-name-nondirectory file))
+    (when (objdump-recognizable-file-p filename)
+      (message "Disassembling %S using objdump." (file-name-nondirectory filename))
       (erase-buffer)
-      (set-visited-file-name (file-name-with-extension file ".objdump"))
-      (call-process objdump-disassemble-executable nil (current-buffer) nil "-d" file)
+      (set-visited-file-name (file-name-with-extension filename ".objdump"))
+      (let ((default-directory (file-name-directory filename)))
+        (call-process objdump-disassemble-executable nil (current-buffer) nil "-d" (file-name-nondirectory filename)))
       (goto-char (point-min))
-      (setq-local objdump-disassemble--orig-filename file))))
+      (setq-local objdump-disassemble--orig-filename filename))))
 
 (defun objdump-disassemble-setup ()
   "Setup the current buffer for `objdump-disassemble-mode'."
