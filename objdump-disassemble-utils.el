@@ -13,7 +13,7 @@
 
 ;;; Code:
 
-(require 'objdump-disassemble-utils)
+(require 'objdump-disassemble)
 
 
 (defcustom objdump-binary-predicate-chunk-size 1024
