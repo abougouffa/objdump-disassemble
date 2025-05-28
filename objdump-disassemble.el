@@ -4,7 +4,7 @@
 
 ;; Author: Abdelhak Bougouffa <abougouffa@fedoraproject.org>
 ;; Keywords: c, tools, files, languages
-;; Version: 1.0
+;; Version: 1.0.1
 
 ;; SPDX-License-Identifier: MIT
 
