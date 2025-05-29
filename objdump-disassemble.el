@@ -3,21 +3,24 @@
 ;; Copyright (C) 2022-2025  Abdelhak Bougouffa
 
 ;; Author: Abdelhak Bougouffa <abougouffa@fedoraproject.org>
+;; URL: https://www.github.com/abougouffa/objdump-disassemble
 ;; Keywords: c, tools, files, languages
 ;; Version: 1.0.1
+;; Package-Requires: ((emacs "28.1"))
 
 ;; SPDX-License-Identifier: MIT
 
 ;;; Commentary:
 
-;;
+;; This package adds support for `objdump-disassemble-mode', which can be used
+;; to automatically disassemble compiled programs using `objdump'.
 
 ;;; Code:
 
 (require 'asm-mode)
 
 (eval-when-compile
-  (require 'cl-macs))
+  (require 'cl-lib))
 
 (defgroup objdump-disassemble nil
   "Use \"objdump\" to display disassembled executable and object files."
@@ -34,6 +37,8 @@
   :type 'natnum)
 
 (make-obsolete-variable 'objdump-executable 'objdump-disassemble-executable "1.0")
+(make-obsolete 'objdump-recognizable-file-p 'objdump-disassemble-recognizable-file-p "1.1.0")
+(make-obsolete 'objdump-recognizable-buffer-p 'objdump-disassemble-recognizable-buffer-p "1.1.0")
 
 (defcustom objdump-disassemble-disable-on-remote nil
   "Don't try to disassemble remote files.
@@ -43,7 +48,7 @@ Normally, this requires objdump to be installed on the remote machine."
   :type 'boolean)
 
 ;;;###autoload
-(defun objdump-recognizable-file-p (filename)
+(defun objdump-disassemble-recognizable-file-p (filename)
   "Can FILENAME be recognized by \"objdump\"."
   (when-let* ((filename (and filename (file-truename filename))))
     (and (executable-find objdump-disassemble-executable)
@@ -60,9 +65,9 @@ Normally, this requires objdump to be installed on the remote machine."
                   (format "%s --file-headers %s" objdump-disassemble-executable (shell-quote-argument local-filename)))))))))
 
 ;;;###autoload
-(defun objdump-recognizable-buffer-p (&optional buffer)
+(defun objdump-disassemble-recognizable-buffer-p (&optional buffer)
   "Can the BUFFER be viewed as a disassembled code with objdump."
-  (objdump-recognizable-file-p (buffer-file-name buffer)))
+  (objdump-disassemble-recognizable-file-p (buffer-file-name buffer)))
 
 (defvar-local objdump-disassemble--orig-filename nil)
 (defvar objdump-disassemble-mode-syntax-table (make-syntax-table asm-mode-syntax-table))
@@ -74,7 +79,7 @@ Normally, this requires objdump to be installed on the remote machine."
 Return nil if the current buffer is not recognizable by objdump."
   (let* ((filename (buffer-file-name))
          (buffer-read-only nil))
-    (when (objdump-recognizable-file-p filename)
+    (when (objdump-disassemble-recognizable-file-p filename)
       (message "Disassembling %S using objdump." (file-name-nondirectory filename))
       (erase-buffer)
       (set-visited-file-name (file-name-with-extension filename ".objdump"))
@@ -121,9 +126,9 @@ Return nil if the current buffer is not recognizable by objdump."
   :group 'objdump-disassemble
   (if global-objdump-disassemble-mode
       (add-hook 'magic-fallback-mode-alist
-                '(objdump-recognizable-buffer-p . objdump-disassemble-mode)
+                '(objdump-disassemble-recognizable-buffer-p . objdump-disassemble-mode)
                 objdump-disassemble-magic-fallback-hook-depth)
-    (cl-callf2 delete '(objdump-recognizable-buffer-p . objdump-disassemble-mode) magic-fallback-mode-alist)))
+    (cl-callf2 delete '(objdump-disassemble-recognizable-buffer-p . objdump-disassemble-mode) magic-fallback-mode-alist)))
 
 
 (provide 'objdump-disassemble)
