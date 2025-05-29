@@ -5,7 +5,7 @@
 ;; Author: Abdelhak Bougouffa <abougouffa@fedoraproject.org>
 ;; URL: https://www.github.com/abougouffa/objdump-disassemble
 ;; Keywords: c, tools, files, languages
-;; Version: 1.0.1
+;; Version: 1.1.0
 ;; Package-Requires: ((emacs "28.1"))
 
 ;; SPDX-License-Identifier: MIT
